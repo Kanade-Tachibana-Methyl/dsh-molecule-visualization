@@ -39,6 +39,7 @@ in depth.
 - 🔄 Durable: the payload rides `tool/result`'s `presentationMeta` and replays after restarts
 - ⚠️ Every failure is visible, with a reason, a hint and Retry
 - ⏱️ No infinite loading
+- ⤢ Expand to the full window: the inline card is compact with a responsive height (no fixed 400px); the expand button lifts the viewer into a window-sized overlay (Esc or a backdrop click closes it)
 - 📦 3Dmol.js 2.4.2 vendored into the client bundle — no CDN, works offline
 - 🔍 Verifiable: `node scripts/verify.mjs` runs typecheck, 98 tests (3 of them render the built bundle in
   jsdom), a 3Dmol parse probe, a real-file end-to-end probe and a built-artifact smoke test

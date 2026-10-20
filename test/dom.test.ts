@@ -72,6 +72,12 @@ async function loadEnvironment() {
   globalThis.devicePixelRatio = 1
   globalThis.requestAnimationFrame = dom.window.requestAnimationFrame.bind(dom.window)
   globalThis.cancelAnimationFrame = dom.window.cancelAnimationFrame.bind(dom.window)
+  // `window` is aliased to globalThis here, so the EventTarget methods that
+  // live on jsdom's Window prototype must be mirrored too — the dialog listens
+  // for Escape on the global target.
+  globalThis.addEventListener = dom.window.addEventListener.bind(dom.window)
+  globalThis.removeEventListener = dom.window.removeEventListener.bind(dom.window)
+  globalThis.dispatchEvent = dom.window.dispatchEvent.bind(dom.window)
   globalThis.ResizeObserver = class {
     observe() {}
     unobserve() {}
@@ -155,9 +161,12 @@ const skip = available ? false : 'lib/client.js has not been built (run node scr
 
 describe('built client bundle in jsdom', { skip }, () => {
   it('renders a failure card with a specific reason, hint and retry instead of a blank canvas', async () => {
-    const { environment, container, mounted } = await mountBlock(metaPayload())
+    // A payload 3Dmol.js cannot find atoms in ("empty-model") — a deterministic
+    // failure in jsdom, unlike WebGL availability which depends on the runner.
+    const emptyMeta = { ...metaPayload(), data: 'REMARK nothing to render\nEND\n' }
+    const { environment, container, mounted } = await mountBlock(emptyMeta)
     const text = container.textContent ?? ''
-    assert.match(text, /WebGL 不可用|解析失败|3Dmol\.js 没有读出原子/, `expected a specific failure card, got: ${text.slice(0, 200)}`)
+    assert.match(text, /3Dmol\.js 没有读出原子|WebGL 不可用|解析失败/, `expected a specific failure card, got: ${text.slice(0, 200)} | html: ${container.innerHTML.slice(0, 600)}`)
     assert.match(text, /重试/, 'the failure card must offer a retry button')
     assert.doesNotMatch(text, /正在加载 3D 视图…/, 'the card must not stay in the loading state forever')
     await environment.act(async () => { mounted.unmount() })
@@ -188,6 +197,46 @@ describe('built client bundle in jsdom', { skip }, () => {
     assert.match(text, /无法显示这份 PDB 结构/)
     assert.match(text, /column 30/)
     assert.match(text, /re-export with standard PDB columns/i)
+    await environment.act(async () => { mounted.unmount() })
+  })
+
+  it('keeps the inline stage responsive instead of a fixed 400px box', async () => {
+    const { environment, container, mounted } = await mountBlock(metaPayload())
+    const markup = container.innerHTML
+    assert.match(markup, /clamp\(240px/, 'the inline stage height must be responsive so the card fits the chat pane')
+    assert.doesNotMatch(markup, /height:\s*400px/, 'the fixed 400px stage must be gone')
+    await environment.act(async () => { mounted.unmount() })
+  })
+
+  it('expands the same viewer into a full-window dialog and closes on Escape', async () => {
+    const { environment, container, mounted } = await mountBlock(metaPayload())
+
+    // The card lives inline; the dialog is not mounted yet.
+    assert.equal(globalThis.document.querySelector('[role="dialog"]'), null)
+
+    const expand = [...container.querySelectorAll('button')]
+      .find(button => button.getAttribute('aria-label') === '放大查看')
+    assert.ok(expand !== undefined, 'the card must offer an expand control')
+
+    await environment.act(async () => {
+      expand.dispatchEvent(new globalThis.window.MouseEvent('click', { bubbles: true }))
+      await new Promise(done => setTimeout(done, 200))
+    })
+
+    const dialog = globalThis.document.querySelector('[role="dialog"]')
+    assert.ok(dialog !== null, 'clicking expand must mount a dialog at the document level')
+    assert.equal(dialog.getAttribute('aria-modal'), 'true')
+    // The dialog holds the viewer, and the conversation keeps a way back.
+    assert.match(dialog.textContent ?? '', /Ball & stick/, 'the dialog must contain the full viewer controls')
+    assert.match(container.textContent ?? '', /收起放大视图/, 'the inline card must leave a way back')
+    assert.equal(container.querySelector('[role="dialog"]'), null, 'the dialog must not be nested in the chat flow')
+
+    await environment.act(async () => {
+      globalThis.dispatchEvent(new globalThis.window.KeyboardEvent('keydown', { key: 'Escape' }))
+      await new Promise(done => setTimeout(done, 100))
+    })
+    assert.equal(globalThis.document.querySelector('[role="dialog"]'), null, 'Escape must close the dialog')
+    assert.match(container.textContent ?? '', /Ball & stick/, 'the inline card must come back')
     await environment.act(async () => { mounted.unmount() })
   })
 })

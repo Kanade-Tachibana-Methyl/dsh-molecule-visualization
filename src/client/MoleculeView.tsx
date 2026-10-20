@@ -5,11 +5,18 @@
  * Cartoon mode renders the protein as cartoon AND hetero atoms (ligands) as
  * sticks, so co-crystallized small molecules stay visible.
  *
+ * Layout: the card lives inside the tool-call row, so it is kept compact — the
+ * stage height is responsive (`clamp`) rather than a fixed 400px, and an
+ * expand button lifts the same viewer into a full-window portal dialog. The
+ * viewer is re-created when the container changes, because 3Dmol.js sizes its
+ * WebGL canvas from the DOM node it was given.
+ *
  * Every failure is *shown*: the card reports the specific reason (parse
  * failure, empty model, WebGL unavailable, container never laid out) with an
  * actionable hint and a retry button, instead of an empty canvas stuck on
  * "Loading 3D viewer…". */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
 import { load3Dmol } from './threeDmol.ts'
 import { STYLE_OPTIONS, applyStyle, type ColorMode } from './style.ts'
 import { LayoutCancelledError, LayoutTimeoutError, awaitLayoutBox } from './layout.ts'
@@ -51,20 +58,26 @@ const DEFAULT_BG = '#1a1a2e'
 
 const S = {
   viewer: { display: 'flex', flexDirection: 'column' as const, width: '100%', border: '1px solid #383856', borderRadius: '8px', overflow: 'hidden', background: '#16213e' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#16213e', borderBottom: '1px solid #383856', gap: '8px' },
-  toolbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: '6px 12px', padding: '6px 12px', background: '#131a30', borderBottom: '1px solid #383856' },
+  viewerExpanded: { height: '100%', minHeight: 0, borderRadius: '12px', boxShadow: '0 18px 60px rgba(0, 0, 0, 0.55)' },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#16213e', borderBottom: '1px solid #383856', gap: '8px' },
+  toolbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: '4px 10px', padding: '5px 10px', background: '#131a30', borderBottom: '1px solid #383856' },
   titleRow: { display: 'flex', alignItems: 'center', minWidth: 0 },
   title: { fontSize: '13px', fontWeight: 600, color: '#e0e0e0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
   meta: { fontSize: '11px', color: '#8888aa', marginLeft: '8px', flexShrink: 0 },
-  controls: { display: 'flex', gap: '4px', flexShrink: 0, flexWrap: 'wrap' as const },
+  controls: { display: 'flex', gap: '4px', flexShrink: 0, flexWrap: 'wrap' as const, alignItems: 'center' },
   btn: { padding: '3px 8px', fontSize: '11px', border: '1px solid #444466', borderRadius: '4px', background: 'transparent', color: '#8888aa', cursor: 'pointer' },
   btnActive: { background: '#4D6BFE', color: '#ffffff', borderColor: '#4D6BFE' },
+  expandBtn: { padding: '3px 8px', fontSize: '11px', border: '1px solid #6f7fbf', borderRadius: '4px', background: 'transparent', color: '#c7d2ff', cursor: 'pointer', marginLeft: '4px' },
   group: { display: 'flex', alignItems: 'center', gap: '5px' },
   groupLabel: { fontSize: '11px', color: '#8888aa', userSelect: 'none' as const },
   swatch: { width: '18px', height: '18px', borderRadius: '4px', border: '2px solid transparent', cursor: 'pointer', padding: 0 },
   swatchActive: { borderColor: '#4D6BFE' },
   colorInput: { width: '22px', height: '20px', padding: 0, border: '1px solid #444466', borderRadius: '4px', background: 'transparent', cursor: 'pointer' },
-  stage: { position: 'relative' as const, width: '100%', height: '400px' },
+  // Responsive instead of a fixed 400px: the card sits in the chat flow, and a
+  // fixed box taller than the visible pane was the main reason the molecule
+  // could not be seen without scrolling.
+  stage: { position: 'relative' as const, width: '100%', height: 'clamp(240px, 34vh, 420px)' },
+  stageExpanded: { position: 'relative' as const, width: '100%', flex: '1 1 auto', minHeight: '220px' },
   canvas: { width: '100%', height: '100%' },
   overlay: {
     position: 'absolute' as const, inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,8 +90,21 @@ const S = {
   errHint: { color: '#9fb0ff' },
   errDetail: { color: '#8888aa', fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontSize: '11px', whiteSpace: 'pre-wrap' as const, wordBreak: 'break-word' as const },
   retry: { padding: '4px 12px', fontSize: '12px', border: '1px solid #4D6BFE', borderRadius: '4px', background: '#4D6BFE', color: '#ffffff', cursor: 'pointer' },
-  notices: { padding: '6px 12px', background: '#2a2620', borderTop: '1px solid #383856', color: '#e0c07a', fontSize: '11px', lineHeight: 1.5 },
+  notices: { padding: '5px 10px', background: '#2a2620', borderTop: '1px solid #383856', color: '#e0c07a', fontSize: '11px', lineHeight: 1.45 },
   noticeItem: { display: 'block' as const },
+  // Full-window layer, portalled to document.body so no chat container can
+  // clip it or impose its own scroll.
+  backdrop: {
+    position: 'fixed' as const, inset: 0, zIndex: 2147483000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '3.5vh 3vw', background: 'rgba(4, 7, 16, 0.72)', overscrollBehavior: 'contain' as const,
+  },
+  dialog: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' as const, minHeight: 0 },
+  // Placeholder left in the conversation while the viewer is expanded, so the
+  // chat does not look like the call disappeared and has a way back.
+  inlineBar: { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 10px', border: '1px dashed #383856', borderRadius: '8px', background: '#131a30', color: '#c7d2ff', fontSize: '12px', boxSizing: 'border-box' as const },
+  inlineBarTitle: { fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+  inlineBarMeta: { color: '#8888aa', fontSize: '11px', flexShrink: 0 },
+  inlineBarSpacer: { flex: '1 1 auto' },
 }
 
 function btnStyle(active: boolean, disabled?: boolean): CSSProperties {
@@ -118,6 +144,8 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
   const [failure, setFailure] = useState<Failure | undefined>(undefined)
   const [notices, setNotices] = useState<readonly string[]>([])
   const [attempt, setAttempt] = useState(0)
+  /** Whether the viewer is lifted into the full-window dialog. */
+  const [expanded, setExpanded] = useState(false)
 
   const destroyViewer = useCallback((): void => {
     const existing = viewerRef.current
@@ -127,7 +155,8 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
     viewerRef.current = null
   }, [])
 
-  // Create the viewer and load the molecule on mount, data change, or retry.
+  // Create the viewer and load the molecule on mount, data change, retry, or
+  // when the container moves between the inline card and the dialog.
   useEffect(() => {
     const container = containerRef.current
     if (container === null) return
@@ -178,11 +207,14 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
     return (): void => {
       cancelled = true
       resizeObserver?.disconnect()
+      // The container is about to be detached (retry, or the dialog opening or
+      // closing): release the WebGL context instead of leaking one per mount.
+      destroyViewer()
     }
     // `style`/`colorMode`/`bg` are applied by their own effects; including them
     // here would re-create the viewer on every toggle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, format, renderFormat, attempt])
+  }, [data, format, renderFormat, attempt, expanded])
 
   // Re-apply style + color mode without re-parsing. Guarded: a failing spec
   // must degrade to a no-op, never crash the component tree.
@@ -202,10 +234,21 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
     try { viewer.setBackgroundColor(bg); viewer.render() } catch { /* keep the last good bg */ }
   }, [bg, status])
 
+  // Escape closes the dialog.
+  useEffect(() => {
+    if (!expanded) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setExpanded(false)
+    }
+    globalThis.addEventListener('keydown', onKeyDown)
+    return (): void => { globalThis.removeEventListener('keydown', onKeyDown) }
+  }, [expanded])
+
   // Teardown on unmount.
   useEffect(() => () => { destroyViewer() }, [destroyViewer])
 
   const retry = (): void => { setAttempt(current => current + 1) }
+  const toggleExpanded = (): void => { setExpanded(current => !current) }
 
   const title = name ?? `Molecule (${format.toUpperCase()})`
   const shownStyle = STYLE_OPTIONS.find(option => option.value === style)
@@ -216,8 +259,8 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
   ].filter((part): part is string => part !== undefined).join(' · ')
   const busy = status !== 'ready'
 
-  return (
-    <div style={S.viewer}>
+  const card = (
+    <div style={expanded ? { ...S.viewer, ...S.viewerExpanded } : S.viewer}>
       <div style={S.header}>
         <div style={S.titleRow}><span style={S.title}>{title}</span><span style={S.meta}>{meta}</span></div>
         <div style={S.controls}>
@@ -225,6 +268,11 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
             <button key={option.value} type="button" title={option.title} style={btnStyle(style === option.value, busy)}
               onClick={(): void => setStyle(option.value)} disabled={busy}>{option.label}</button>
           ))}
+          <button type="button" style={S.expandBtn} onClick={toggleExpanded}
+            aria-label={expanded ? '收起放大视图' : '放大查看'}
+            title={expanded ? '收起（Esc）' : '把 3D 视图放大到整个窗口'}>
+            {expanded ? '⤡ 收起' : '⤢ 放大'}
+          </button>
         </div>
       </div>
       <div style={S.toolbar}>
@@ -252,7 +300,7 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
           )}
         </div>
       </div>
-      <div style={S.stage}>
+      <div style={expanded ? S.stageExpanded : S.stage}>
         {/* The container stays mounted across failures so Retry has a target. */}
         <div style={{ ...S.canvas, background: bg }} ref={containerRef} />
         {status === 'loading' && (
@@ -278,5 +326,30 @@ export function MoleculeView(props: MoleculeViewProps): ReactElement {
         </div>
       )}
     </div>
+  )
+
+  if (!expanded) return card
+
+  return (
+    <>
+      <div style={S.inlineBar}>
+        <span style={S.inlineBarTitle}>{title}</span>
+        <span style={S.inlineBarMeta}>{meta}</span>
+        <span style={S.inlineBarSpacer} />
+        <button type="button" style={S.expandBtn} onClick={toggleExpanded}>收起放大视图</button>
+      </div>
+      {createPortal(
+        <div
+          style={S.backdrop}
+          role="presentation"
+          onClick={(event): void => { if (event.target === event.currentTarget) setExpanded(false) }}
+        >
+          <div style={S.dialog} role="dialog" aria-modal="true" aria-label={`${title} — 放大查看`}>
+            {card}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }

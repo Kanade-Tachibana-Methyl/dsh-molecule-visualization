@@ -1,7 +1,7 @@
 {
   "name": "dsh-molecule-visualization",
   "description": "Interactive 3D molecular visualization for DeepSeek Harness — PDB/SDF/MOL/MOL2/XYZ/Gaussian input with strict host-side validation, ball-and-stick rendering and visible failure reasons. Based on PandaAIDD/dsh-molecule-viewer (MIT).",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "icon": "./assets/icon.svg",

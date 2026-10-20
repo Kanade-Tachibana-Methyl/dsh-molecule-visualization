@@ -75,6 +75,8 @@ const reactStub = {
 }
 const requireShim = (specifier) => {
   if (specifier === 'react' || specifier === 'react/jsx-runtime') return reactStub
+  // The expand view is portalled, so the bundle imports `createPortal`.
+  if (specifier === 'react-dom') return { createPortal: (node) => node }
   throw new Error(`client bundle requires unexpected external: ${specifier}`)
 }
 globalThis.window = globalThis
