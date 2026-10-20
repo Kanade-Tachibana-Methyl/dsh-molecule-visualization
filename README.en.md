@@ -49,6 +49,12 @@ in depth.
 dsh plugin --profile web add git+https://github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization.git
 ```
 
+Source form (no npm package required):
+
+```bash
+dsh plugin --profile web add github:Kanade-Tachibana-Methyl/dsh-molecule-visualization
+```
+
 If GitHub is unreliable from your network, the SSH form works too:
 `dsh plugin --profile web add git+ssh://git@github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization.git`
 

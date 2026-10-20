@@ -48,6 +48,12 @@ DSH（DeepSeek Harness）分子可视化插件：传入分子文件路径或 PDB
 dsh plugin --profile web add git+https://github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization.git
 ```
 
+也可以直接用源码安装形式（不需要 npm 包）：
+
+```bash
+dsh plugin --profile web add github:Kanade-Tachibana-Methyl/dsh-molecule-visualization
+```
+
 > GitHub 访问不稳定时，可换成 SSH 形式：
 > `dsh plugin --profile web add git+ssh://git@github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization.git`
 
