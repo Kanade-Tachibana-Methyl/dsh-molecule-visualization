@@ -1,0 +1,9 @@
+# Build output (`lib/`) is committed on purpose: the package is installed from
+# source (dsh plugin add / a copied directory) and has no prepare step, so the
+# prebuilt host and client halves must be present.
+node_modules/
+.npm-cache/
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db

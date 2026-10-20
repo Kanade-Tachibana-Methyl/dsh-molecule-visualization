@@ -1,0 +1,22 @@
+# Normalize source text to LF so Windows checkouts stay reviewable.
+* text=auto
+
+*.md text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.svg text eol=lf
+
+# Generated/vendored bundles are byte-identical artifacts: never rewrite their
+# line endings (the 3Dmol.js build is minified and served as-is).
+*.cjs -text
+*.map -text
+lib/*.js -text
+lib/types/** -text
+vendor/** -text
+probe/1CRN.pdb -text
+
+# Keep the collected evidence readable in diffs rather than collapsed.
+docs/verification.md diff=markdown

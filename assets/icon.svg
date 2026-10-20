@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Molecule">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16213e"/>
+      <stop offset="1" stop-color="#0f1629"/>
+    </linearGradient>
+    <radialGradient id="sphereA" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#8fa3ff"/>
+      <stop offset="1" stop-color="#4D6BFE"/>
+    </radialGradient>
+    <radialGradient id="sphereB" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#ffd9a0"/>
+      <stop offset="1" stop-color="#e08a2e"/>
+    </radialGradient>
+    <radialGradient id="sphereC" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#a8f0d0"/>
+      <stop offset="1" stop-color="#2fae86"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)"/>
+  <g stroke="#8892b0" stroke-width="6" stroke-linecap="round">
+    <line x1="64" y1="64" x2="30" y2="94"/>
+    <line x1="64" y1="64" x2="98" y2="94"/>
+    <line x1="64" y1="64" x2="64" y2="30"/>
+  </g>
+  <circle cx="64" cy="64" r="15" fill="url(#sphereA)"/>
+  <circle cx="30" cy="94" r="11" fill="url(#sphereB)"/>
+  <circle cx="98" cy="94" r="11" fill="url(#sphereC)"/>
+  <circle cx="64" cy="30" r="9" fill="#e6ecff"/>
+</svg>

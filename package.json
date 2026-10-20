@@ -1,0 +1,111 @@
+{
+  "name": "dsh-molecule-visualization",
+  "description": "Interactive 3D molecular visualization for DeepSeek Harness — PDB/SDF/MOL/MOL2/XYZ/Gaussian input with strict host-side validation, ball-and-stick rendering and visible failure reasons. Based on PandaAIDD/dsh-molecule-viewer (MIT).",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "icon": "./assets/icon.svg",
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "vendor",
+    "assets",
+    "cordis.patch.yml",
+    "LICENSE",
+    "NOTICE.md",
+    "CHANGELOG.md",
+    "README.md",
+    "README.en.md",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=22",
+    "dsh": ">=0.2.0-rc.2"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "node scripts/typecheck.mjs",
+    "test": "node test/run-all.ts",
+    "probe": "node probe/3dmol-probe.cjs && node probe/verify-real-files.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-client-runtime": "*",
+    "@deepseek-ai/dsh-client-ui-tool": "*",
+    "@deepseek-ai/dsh-invariants": "*",
+    "@deepseek-ai/dsh-tools": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "dependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^25.0.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.0"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-tool"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "deepseek",
+    "molecule",
+    "molecule-visualization",
+    "molecular-visualization",
+    "3dmol",
+    "visualization",
+    "pdb",
+    "sdf",
+    "mol",
+    "mol2",
+    "xyz",
+    "gjf",
+    "gaussian",
+    "chemistry"
+  ],
+  "upstream": {
+    "repository": "https://github.com/PandaAIDD/dsh-molecule-viewer",
+    "package": "@dsh-plugins/dsh-molecule-viewer",
+    "license": "MIT",
+    "version": "0.2.0",
+    "note": "Derived from the upstream package. See NOTICE.md for the list of changes."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization.git"
+  },
+  "homepage": "https://github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization#readme",
+  "bugs": {
+    "url": "https://github.com/Kanade-Tachibana-Methyl/dsh-molecule-visualization/issues"
+  }
+}

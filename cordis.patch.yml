@@ -1,0 +1,24 @@
+# Bundle patch for the molecule viewer plugin.
+#
+# Declared by the `dsh.bundle.patch` manifest field: inserts the plugin row
+# into any profile that lists dsh-molecule-visualization in its
+# `dsh.profile.bundles`. The single row loads the package's host-half apply
+# (registers the view_molecule tool). The package also declares dsh.client,
+# which the web bundle discovery picks up automatically for the 3Dmol.js
+# renderer — no separate row needed for the client half.
+#
+# Fork defaults (see README «插件配置»):
+#   defaultStyle          initial representation for new viewers.
+#                         «ballstick» reads better than bare sticks for small
+#                         molecules; «stick» keeps upstream behaviour.
+#   repairShiftedPdbAltLoc blank a spurious column-17 altLoc letter when a PDB
+#                         is shifted one column (3Dmol.js would silently drop
+#                         those atoms). Set to false to reject such files
+#                         instead — the card then explains the columns.
+
+- insert:
+    - id: molecule-visualization
+      name: 'dsh-molecule-visualization'
+      config:
+        defaultStyle: stick
+        repairShiftedPdbAltLoc: true
