@@ -13,6 +13,8 @@ Interactive 3D molecular viewer for DeepSeek Harness: pass a file path or raw
 PDB/SDF/MOL/MOL2/XYZ/GJF content and the conversation renders a live 3Dmol.js viewer
 (rotate, zoom, switch style, recolor).
 
+[![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/kanade-tachibana-methyl/dsh-molecule-visualization)
+
 ## Fixes over upstream 0.2.0
 
 | # | Bug | Upstream symptom | Fix |
