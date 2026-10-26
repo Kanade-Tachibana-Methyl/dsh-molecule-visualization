@@ -14,6 +14,7 @@ PDB/SDF/MOL/MOL2/XYZ/GJF content and the conversation renders a live 3Dmol.js vi
 (rotate, zoom, switch style, recolor).
 
 [![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/kanade-tachibana-methyl/dsh-molecule-visualization)
+[![dsh.so install · dsh 0.2.1-rc.2](https://www.dsh.so/badge/install/dsh-molecule-visualization@0.2.1-rc.2.svg)](https://www.dsh.so/artifact/dsh-molecule-visualization/)
 
 ## Fixes over upstream 0.2.0
 
