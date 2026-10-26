@@ -12,6 +12,7 @@ DSH（DeepSeek Harness）分子可视化插件：传入分子文件路径或 PDB
 在会话界面渲染**交互式 3D 分子查看器**（3Dmol.js，支持旋转/缩放/样式切换/着色）。
 
 [![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/plugins/kanade-tachibana-methyl/dsh-molecule-visualization)
+[![dsh.so install · dsh 0.2.1-rc.2](https://www.dsh.so/badge/install/dsh-molecule-visualization@0.2.1-rc.2.svg)](https://www.dsh.so/artifact/dsh-molecule-visualization/)
 
 ## 相对上游 0.2.0 修复的问题
 
